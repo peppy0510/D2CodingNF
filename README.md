@@ -13,7 +13,6 @@
 
 ### 빌드
 
-* `original/`의 D2Coding 원본을 패치해서 `output/`에 결과를 만듭니다. 배포 파일은 그 결과를 루트에 둔 것입니다.
 * `patcher.py`는 [Nerd Fonts의 font-patcher](https://github.com/ryanoasis/nerd-fonts/blob/master/font-patcher)를 원본 글폭을 유지하도록 고친 것입니다.
 * `postprocess.py`는 FontForge가 바꾼 고정폭 표시(`post.isFixedPitch`)와 평균 글자폭(`OS/2.xAvgCharWidth`)을 원본 값으로 되돌리고, Bold를 `D2CodingNF` 패밀리로 묶습니다.
 
@@ -22,8 +21,7 @@ apt install fontforge python3-fonttools
 ```
 
 ```bash
-fontforge -script patcher.py "original/D2Coding-Ver1.4.0-20261003.ttf" --windows --complete --careful --postprocess ./postprocess.py --removeligatures --adjust-line-height --glyphdir "glyphs/" --outputdir "output/" --extension "ttf" --quiet --no-progressbars --use-single-width-glyphs
-fontforge -script patcher.py "original/D2CodingBold-Ver1.4.0-20261003.ttf" --windows --complete --careful --postprocess ./postprocess.py --removeligatures --adjust-line-height --glyphdir "glyphs/" --outputdir "output/" --extension "ttf" --quiet --no-progressbars --use-single-width-glyphs
+./build.sh
 ```
 
 ### 라이선스

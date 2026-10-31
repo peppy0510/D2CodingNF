@@ -7,11 +7,10 @@
     * 0을 점 0으로 바꾸려면 `cv01`(또는 `ss01`) 기능을 켭니다. 예: Windows Terminal `"font": { "features": { "cv01": 1 } }`
     * Windows에서 검증하였습니다.
 
-* 기존 `D2CodingNF`, `D2CodingNFX`를 제거하고 다음의 파일을 설치하면 됩니다. Regular와 Bold는 별도 파일입니다.
+* 기존 폰트를 제거하고 다음의 파일을 설치하면 됩니다. Regular와 Bold는 별도 파일입니다.
 
     * Regular: `D2CodingNF-Ver1.4.0-20261003.ttf`
     * Bold: `D2CodingNF-Bold-Ver1.4.0-20261003.ttf`
-    * 1.3.2의 `D2CodingNFX`는 더 이상 필요하지 않습니다. 쓰던 곳은 `D2CodingNF`로 바꿉니다.
 
 * 직접 제작하기 위해서는 다음과 같이 `patcher.py`와 `postprocess.py`를 사용합니다.
 

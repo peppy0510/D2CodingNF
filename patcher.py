@@ -87,9 +87,8 @@ class font_patcher:
         # else:
         #     self.extension = '.' + self.args.extension
 
-    def load_font(self, keepOriginal=True):
+    def load_font(self):
 
-        self.keepOriginal = keepOriginal
         self.args = None  # class 'argparse.Namespace'
         self.sym_font_args = []
         self.config = None  # class 'configparser.ConfigParser'
@@ -135,18 +134,13 @@ class font_patcher:
         # self.sourceFont.close()
 
     def patch(self):
-        self.load_font(keepOriginal=True)
-        self._patch()
-        self.sourceFont.close()
-        self.load_font(keepOriginal=False)
+        self.load_font()
         self._patch()
         self.sourceFont.close()
 
     def _patch(self):
-        if self.args.single:
-            # Force width to be equal on all glyphs to ensure the font is considered monospaced on Windows.
-            # This needs to be done on all characters, as some information seems to be lost from the original font file.
-            self.set_sourcefont_glyph_widths()
+        # Source glyph widths are kept as-is (Hangul and CJK stay double-width).
+        # Windows monospace metadata is restored by postprocess.py.
 
         # Prevent opening and closing the fontforge font. Makes things faster when patching
         # multiple ranges using the same symbol font.
@@ -369,10 +363,6 @@ class font_patcher:
             additionalFontNameSuffix += " M"
             verboseAdditionalFontNameSuffix += " Mono"
 
-        if not self.keepOriginal:
-            additionalFontNameSuffix += ' X'
-            verboseAdditionalFontNameSuffix += ' X'
-
         # basically split the font name around the dash "-" to get the fontname and the style (e.g. Bold)
         # this does not seem very reliable so only use the style here as a fallback if the font does not
         # have an internal style defined (in sfnt_names)
@@ -431,9 +421,6 @@ class font_patcher:
             familyname += " " + projectNameSingular
             if self.args.single:
                 familyname += " Mono"
-
-        if not self.keepOriginal:
-            familyname += ' X'
 
         # Don't truncate the subfamily to keep fontname unique.  MacOS treats fonts with
         # the same name as the same font, even if subFamily is different.
@@ -1001,40 +988,6 @@ class font_patcher:
         # if self.args.quiet is False or self.args.progressbars:
         #     sys.stdout.write("\n")
 
-    def set_sourcefont_glyph_widths(self):
-        """ Makes self.sourceFont monospace compliant """
-        if self.keepOriginal:
-            return
-        for glyph in self.sourceFont.glyphs():
-            if glyph.width == self.font_dim['width']:
-                continue
-
-            if glyph.width != 0:
-                self.remove_glyph_neg_bearings(glyph)
-
-            # glyph.width = self.font_dim['width'] * 2
-            # self.set_glyph_width_mono(glyph)
-
-            # if (glyph.width != 0):
-            #     # If the width is zero this glyph is intened to be printed on top of another one.
-            #     # In this case we need to keep the negative bearings to shift it 'left'.
-            #     # Things like &Auml; have these: composed of U+0041 'A' and U+0308 'double dot above'
-            #     #
-            #     # If width is not zero, correct the bearings such that they are within the width:
-            #     # if not self.is_wide_char(glyph):
-            #         self.remove_glyph_neg_bearings(glyph)
-
-            # if self.is_wide_char(glyph) and glyph.width:
-            #     self.remove_glyph_neg_bearings(glyph)
-            #     glyph.width = self.font_dim['width'] * 2
-
-            if self.is_wide_char(glyph):
-                continue
-            #     glyph.width = self.font_dim['width']
-            # else:
-            glyph.width = self.font_dim['width']
-            # self.set_glyph_width_mono(glyph)
-
     def remove_glyph_neg_bearings(self, glyph):
         """ Sets passed glyph's bearings 0 if they are negative. """
 
@@ -1057,35 +1010,6 @@ class font_patcher:
         #     return
 
         glyph.width = self.font_dim['width']
-
-    def is_wide_char(self, glyph):
-        r'/[ㄱ-ㅎ|가-힣|a-zA-Z\-\.\s]/'
-        '''
-        가나다라마바사김감교쿄가나다라마
-        ㄱㄴㄳㅄㄸㅉㅒㅣㅖ쫒힣쫀득짠뜪쫀
-        12345678901234567890abcdefABCDEF
-        🥺
-        '''
-
-        # https://jrgraphix.net/r/Unicode/
-        code = int(glyph.unicode)
-        return any([
-            (int('1100', 16) <= code <= int('11FF', 16)),  # Hangul Jamo
-            (int('3130', 16) <= code <= int('318F', 16)),  # Hangul Compatibility Jamo
-            (int('AC00', 16) <= code <= int('D7AF', 16)),  # Hangul Syllables
-            # (int('3040', 16) <= code <= int('309F', 16)),  # Hiragana
-            # (int('30A0', 16) <= code <= int('30FF', 16)),  # Katakana
-            # (int('2E80', 16) <= code <= int('2EFF', 16)),  # CJK Radicals Supplement
-            # (int('3000', 16) <= code <= int('303F', 16)),  # CJK Symbols and Punctuation
-            # (int('3200', 16) <= code <= int('32FF', 16)),  # Enclosed CJK Letters and Months
-            # (int('3300', 16) <= code <= int('33FF', 16)),  # CJK Compatibility
-            # (int('3400', 16) <= code <= int('4DBF', 16)),  # CJK Unified Ideographs Extension A
-            # (int('4E00', 16) <= code <= int('9FFF', 16)),  # CJK Unified Ideographs
-            # (int('F900', 16) <= code <= int('FAFF', 16)),  # CJK Compatibility Ideographs
-            # (int('FE30', 16) <= code <= int('FE4F', 16)),  # CJK Compatibility Forms
-            # (int('20000', 16) <= code <= int('2A6DF', 16)),  # CJK Unified Ideographs Extension B
-            # (int('2F800', 16) <= code <= int('2FA1F', 16)), # CJK Compatibility Ideographs Supplement
-        ])
 
 
 def replace_font_name(font_name, replacement_dict):
